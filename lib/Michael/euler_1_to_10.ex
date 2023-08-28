@@ -1,8 +1,5 @@
-defmodule Euler1To10 do
-  @moduledoc """
-    First 10 problems on project Euler
-    https://projecteuler.net/archive
-  """
+defmodule Euler.Multiples do
+  @moduledoc false
 
   @doc """
     Question 1
@@ -13,22 +10,24 @@ defmodule Euler1To10 do
 
   ## Examples
 
-      iex> Euler_1_10.three_or_five(999)
+      iex> Euler.Multiples.solve()
       233168
 
   """
-  @spec three_or_five(integer) :: non_neg_integer
-  def three_or_five(n), do: three_or_five(n, 0)
-
-  defp three_or_five(n, sum) when n > 0 and (rem(n, 5) == 0 or rem(n, 3) == 0) do
-    n + three_or_five(n - 1, sum)
+  @spec solve(non_neg_integer, non_neg_integer) :: non_neg_integer
+  def solve(n \\ 999, sum \\ 0)
+  def solve(0, sum), do: sum
+  def solve(n, sum) do
+    if n > 0 and (rem(n, 5) == 0 or rem(n, 3) == 0) do
+      solve(n - 1, sum + n)
+    else
+      solve(n - 1, sum)
+    end
   end
+end
 
-  defp three_or_five(n, sum) when n > 0 do
-    three_or_five(n - 1, sum)
-  end
-
-  defp three_or_five(n, _sum) when n <= 0, do: 0
+defmodule Euler.Fibonacci do
+  @moduledoc false
 
   @doc """
     Question 2
@@ -42,29 +41,32 @@ defmodule Euler1To10 do
 
   ## Examples
 
-      iex> Euler_1_10.even_fibonacci()
+      iex> Euler.Fibonacci.solve()
       233168
 
   """
-  @spec even_fibonacci :: non_neg_integer
-  def even_fibonacci, do: even_fibonacci(2, 1, 0)
+  @spec solve(non_neg_integer(), non_neg_integer(), non_neg_integer()) :: non_neg_integer
+  def solve(current \\ 2, previous \\ 1, sum \\ 0)
 
-  defp even_fibonacci(current, previous, sum) when rem(current, 2) == 0 and current < 4_000_000 do
-    current + even_fibonacci(current + previous, current, sum)
-  end
+  def solve(current, previous, sum) do
+    cond do
+      rem(current, 2) == 0 and current < 4_000_000 ->
+        solve(current + previous, current, sum + current)
 
-  defp even_fibonacci(current, previous, sum) when current < 4_000_000 do
-    even_fibonacci(current + previous, current, sum)
-  end
+      current < 4_000_000 ->
+        solve(current + previous, current, sum)
 
-  defp even_fibonacci(current, _previous, sum)
-       when rem(current, 2) == 0 and current == 4_000_000 do
-    sum + current
-  end
+      rem(current, 2) == 0 and current == 4_000_000 ->
+        sum + current
 
-  defp even_fibonacci(current, _previous, sum) when current >= 4_000_000 do
-    sum
+      current >= 4_000_000 ->
+        sum
+    end
   end
+end
+
+defmodule Euler.LargestPrime do
+  @moduledoc false
 
   @doc """
     Question 3
@@ -74,21 +76,56 @@ defmodule Euler1To10 do
 
     ## Examples
 
-    iex> Euler_1_10.largest_prime(600_851_475_143)
+    iex> Euler.LargestPrime.solve()
     6857
   """
-  @spec largest_prime(non_neg_integer) :: non_neg_integer
-  def largest_prime(n) do
+  @spec solve(non_neg_integer) :: non_neg_integer
+  def solve(n \\ 600_851_475_143) do
     n
     |> :math.sqrt()
     |> trunc()
     |> (&(&1..2)).()
     |> Enum.filter(&(rem(n, &1) == 0 && check_prime(&1)))
+    |> Enum.take(1)
     |> hd()
   end
 
   defp check_prime(x) do
     2..(x - 1) |> Enum.all?(&(rem(x, &1) != 0))
   end
+end
 
+defmodule Euler.Palindrone do
+  @moduledoc false
+
+  @doc """
+    Question 4
+    A palindromic number reads the same both ways. The largest palindrome made from the
+    product of two 2-digit numbers is 9009 = 91 x 99.
+
+    Find the largest palindrome made from the product of two 3-digit numbers.
+
+    ## Examples
+
+    iex> Euler_1_10.palidrome()
+    906609
+  """
+  def solve() do
+    for x <- 999..900, y <- 999..900, x > y do
+      (x * y)
+      |> Integer.to_string()
+      |> check_string
+      |> Enum.all?(&(&1 === true)) && x * y
+    end
+    |> Enum.filter(&(&1 !== false))
+    |> hd()
+  end
+
+  defp check_string(string) do
+    length = string |> String.length() |> (&(&1 / 2)).() |> trunc()
+
+    for x <- 0..(length - 1) do
+      String.at(string, x) === String.at(string, String.length(string) - (x + 1))
+    end
+  end
 end

@@ -1,0 +1,1267 @@
+# Elixir 16 Notes
+
+```elixir
+require Integer
+```
+
+## Elixir Basics
+
+### Atoms:
+
+\<name>: - Known as constants, an atoms name is its value.
+
+`:ok` is an atom that returns from completed functions
+
+### List of Types:
+
+* Abitrary sized ints
+* floating point numbers
+* atoms, ranges, and regular expressions
+* PIDs and ports
+* references
+* tuples, lists, maps, and binarys
+* functions
+
+#### Note on atoms:
+
+:fred != "fred" but :"fred" = "fred"
+
+### Regex:
+
+Written as `~r{regex here}opts`: the list of available options is included below
+
+the {} in the regex are delimiters and can be replaced by any other chosen delimiter
+if delimiter appears in the actual regex, escape with '\'
+
+#### Opts:
+
+* f: force
+* i: case-sensitive
+* m: multi-line, use `^`,`$`,`\A`,`\z`
+* s: `.` will match newline chars
+* U: makes `*` and `+` match as little as possible
+* u enable unicode patterns like `\p`
+* x ignore whitespace and comments `#`
+
+```elixir
+IO.puts(Regex.run(~r{[aeiou]}i, "caterpillar"))
+IO.puts(Regex.scan(~r{[aeiou]}, "caterpillar"))
+IO.puts(Regex.replace(~r{[aeiou]}, "caterpillar", ""))
+# PID is available by calling "self"
+# make_ref creates a globally unique reference
+# Tuples:
+{1, 2}
+{status, count} = {:ok, 42}
+IO.puts(status)
+IO.puts(count)
+# functions generally output the atom :ok if it returns succesfully, therefore
+# when writing functions, its best to arrange them in tuple returns of {status, data}
+# Write matches to assume success: {:ok, file} = File.open("some file")
+# Lists:
+# Concatenation = [1,2,3,4,5,6]
+[1, 2, 3] ++ [4, 5, 6]
+# Difference = [1,3]
+[1, 2, 3, 4] -- [2, 4]
+# Membership = true
+1 in [1, 2, 3]
+# Membership = false
+"wombat" in [1, 2, 3, 4]
+# key'd lists
+# equivalent to  [{:name, "Dave"}, {:city, "Dallas"}]
+[name: "Dave", city: "Dallas"]
+# The brackets can be ommited if the named list is the last argument of a function or list
+# = [1, {:name, "test"}, {:city, "shelby township"}]
+[1, name: "test", city: "shelby township"]
+# Maps
+# Format: %{key => value, key => value}
+states = %{"AL" => "Alabama", "WI" => "Wisconsin"}
+states["AL"]
+# states.AL fails, only atoms can be used with dot notation
+dot_notation = %{:key1 => "some value"}
+IO.puts(dot_notation.key1)
+# Binaries
+# Format: bin = <<1,2>>
+bin = <<1, 2>>
+IO.puts(byte_size(bin))
+# Operators
+# Strict equality a === b , 1 === 1.0 is false
+# Strict inequality a !== b, 1 !== 1.0 is true
+# Value equality a == b 1 == 1.0 is true
+# Value inequality a != b 1 != 1.0 is false
+# Normal comparisons a > | >= | < | <= b
+# Boolean operators require a true/false value (or, and, not)
+# Relaxed boolean operators any value other than nil or false is true
+#   a || b => a if a is truthy, else b
+#   a && b => b ia a is truthy, else a
+#  !a      => false if a is truthy, else true
+# div(a,b) returns int, a/b returns float, rem(a,b) returns remainder of a/b
+# Join operators
+# bin1 <> bin2 concatenates two binaries
+# list1 ++ list2 concatentates two lists
+# list1 -- list2 removes elements of list2 from list1
+# a in enum tests if a is included, for a in maps, use {key, value} in map
+# do notation: groups list of expressions together
+line_no = 50
+
+if line_no == 50 do
+  IO.puts("new-page\f")
+  line_no = 0
+end
+
+IO.puts(line_no)
+
+# Note this is bad practice, if modifying a value, function should return it instead
+# with introduces local scoped variables, useful when calculating a value, without having it
+# leak to the main application
+
+# With notation allows for temporary variables
+values = [1, 2, 3, 4, 5]
+
+mean =
+  with count = Enum.count(values), sum = Enum.sum(values), do: sum / count
+
+IO.puts(mean)
+```
+
+## Anonymous Functions
+
+```elixir
+# Format: fn keyword
+# fn
+# {param list} -> {param body}
+# {param list} -> {param body}
+# end
+# called with . as <fun name>.(<param list>)
+# named function calls do not use '.'
+sum = fn a, b -> a + b end
+# IO.puts(
+sum.(2, 3)
+# )
+
+# Pattern matching function
+swap = fn {a, b} -> {b, a} end
+swap.({2, 4})
+
+# exercise impement the following
+# 1.) list_concat.([:a, :b], [:c, :d]) => [:a, :b, :c, :d]
+list_concat = fn a, b -> a ++ b end
+list_concat.([:a, :b], [:c, :d])
+
+# 2.) sum.(1,2,3) => 6
+sum = fn a, b, c -> a + b + c end
+sum.(1, 2, 3)
+
+# 3.) pair_tuple_to_list.({1234, 5678}) => [1234, 5678]
+pair_tuple_to_list = fn {a, b} -> [a, b] end
+pair_tuple_to_list.({1234, 5678})
+
+# Exercise 2
+# Write a function that takes three arguments if first two are 0, return "fizzbuzz"
+# if first is zero return fizz. if second is zero return buzz, otherwise return 3rd
+fizz_buzz = fn
+  0, 0, _ -> "FizzBuzz"
+  0, _, _ -> "Fizz"
+  _, 0, _ -> "Buzz"
+  _, _, c -> c
+end
+
+# Tests
+# IO.puts(fizz_buzz.(0, "hi", "sup"))
+# IO.puts(fizz_buzz.("yoyo", 0, "sup"))
+# IO.puts(fizz_buzz.("yoyo", "hi", "sup"))
+# IO.puts(fizz_buzz.(0, 0, "sup"))
+
+# Exercise 3
+# operator rem(a,b) returns the remainder of a by b
+# write a function that takes n, and calls fizzbuzz with rem(n3), rem(n5), n
+
+fizz_buzz_rem = fn n -> fizz_buzz.(rem(n, 3), rem(n, 5), n) end
+# Tests
+for i <- 0..6 do
+  # IO.puts(
+  fizz_buzz_rem.(10 + i)
+  # )
+end
+
+# Exercise 4
+# Write a function prefix that takes a string. it should return a new function
+# that takes a second string. When that function is called it will return a string
+# containing the first string, a space, and the second string
+prefix = fn str1 -> fn str2 -> str1 <> " " <> str2 end end
+# Tests
+mr = prefix.("Mr")
+# IO.puts(
+mr.("Hummel")
+# )
+
+# times_2 = fn n -> n * 2 end
+# apply_times = fn fun, value -> fun.(value) end
+# IO.puts(apply_times.(times_2, 10))
+```
+
+## Pattern Matching
+
+```elixir
+# generic matches
+a = 1
+1 = a
+# 2 = a; errors, as no assignment is available for 2 to equal 1
+# note, a = 2; works, as elixir will only attempt to transform the left hand side
+list = [2, 3, [4, 3, 2]]
+[a, b, c] = list
+# sets a = 2, b = 3, c =[4,3,2]
+# deconstructed further
+[a, b, [c, d, f]] = list
+# sets c = 4, d = 3, e = 2
+# elixir will assign variables so long as a patten matches
+[a, 3, b] = list
+# this also works, as 3 matches the expected index in list
+# note [a, 4, b] does not work as 3!=4
+# the following are equivalent expressions
+[a] = [[1, 2, 3]]
+a = [[1, 2, 3]]
+# Underscores can replace sections in patterns
+# this is valid, _ works as a wildcard
+[a, _, _] = list
+
+# Pin operator, use previous value of variable in comparison
+# ^a = 3, fails, 2 != 3 as 2 is the last assignment to a
+# a = 2; ^a = 2 - a, fails, 2 != (2 - 2)
+```
+
+## Passing Functions as Arguments
+
+```elixir
+times_2 = fn n -> n * 2 end
+apply = fn fun, value -> fun.(value) end
+apply.(times_2, 6)
+```
+
+#### Map functions
+
+Return a value that does NOT mutate the original, as seen by the three transformations given below
+
+```elixir
+list = [1, 3, 5, 7, 9]
+Enum.map(list, fn elem -> elem * 2 end)
+```
+
+```elixir
+Enum.map(list, fn elem -> elem > 6 end)
+```
+
+```elixir
+Enum.map(list, fn elem -> elem * elem end)
+```
+
+## Pinned Values and Function Parameters
+
+```elixir
+# Anonymous function looks for original set name for a match
+defmodule Greeter do
+  def for(name, greeting) do
+    fn
+      ^name -> "#{greeting} #{name}"
+      _ -> "I dont know you"
+    end
+  end
+end
+
+mr_hummel = Greeter.for("Michael", "Hello")
+IO.puts(mr_hummel.("Michael"))
+IO.puts(mr_hummel.("Bob"))
+```
+
+```elixir
+# Short cut for helper functions
+add_one = &(&1 + 1)
+
+# this is equivalent to fn(n) -> n + 1 end
+IO.puts("add_one: #{add_one.(44)}")
+
+# &1 binds a parameter and resuses
+square = &(&1 * &1)
+IO.puts("square: #{square.(9)}")
+
+# If an anonymous function declaration fits the original function 
+# (i.e. this fits IO.puts), the function will automatically be optimized to reference
+# the original function
+speak = &IO.puts(&1)
+speak.("speak: hello")
+
+# you can use multiple parameters this way
+add_two_numbers = &(&1 + &2)
+# same as: fn (one,two) -> one + two end
+IO.puts("add_two_numbers: #{add_two_numbers.(4, 5)}")
+```
+
+```elixir
+# can return tuples/lists of functions, as seen below
+# first returns the integer division, second returns the remainder with 
+# the built in function calls
+div_rem = &{div(&1, &2), rem(&1, &2)}
+div_rem.(13, 6)
+```
+
+```elixir
+# & works with strings, and string-like literals
+s = &"bacon and #{&1}"
+IO.puts(s.("eggs"))
+
+# Regex
+match_end = &~r/.*#{&1}$/
+IO.puts("cat" =~ match_end.("t"))
+IO.puts("cat" =~ match_end.("!"))
+```
+
+```elixir
+# Put this together to pass functions to other functions
+Enum.map([1, 2, 3, 4], &(&1 + 1))
+```
+
+```elixir
+# use & to rewrite the functions
+# 1.) Enum.map [1,2,3,4], fn x -> x + 2 end
+Enum.map([1, 2, 3, 4], &(&1 + 2))
+```
+
+```elixir
+# 2.) Enum.each [1,2,3,4], fn x -> IO.inspect x end
+Enum.each([1, 2, 3, 4], &IO.inspect(&1))
+```
+
+## Modules and Named Functions
+
+```elixir
+defmodule Times do
+  def double(n) do
+    IO.puts(n * 2)
+  end
+
+  def double(x, n) do
+    IO.puts((x + n) * 2)
+  end
+end
+
+# Both are valid but completely separate functions. known by elixer as 
+# double/1 and double/2 where the number denotes the number of parameters
+Times.double(2)
+Times.double(2, 3)
+
+# Do notation with def above, but can be used in atomic form
+defmodule Times_V2 do
+  def double(n), do: IO.puts(n * 2)
+end
+
+Times_V2.double(6)
+```
+
+```elixir
+# Exercises:
+# Extend the times module with a triple function that multiplies its param by 3
+# Extend to make a quadruple function, utilizing double
+defmodule Times_V3 do
+  def double(n), do: n * 2
+  def triple(n), do: n * 3
+  def quadruple(n), do: double(double(n))
+end
+
+IO.puts(Times_V3.triple(3))
+IO.puts(Times_V3.quadruple(4))
+```
+
+## Function Calls and Pattern Matching
+
+```elixir
+# Functions work in a top down approach, starting with the
+# The first clause, and continuing down the line till a pattern matches
+# this is the basis for recursion as seen belowing in factorial
+defmodule Factorial do
+  def of(0), do: 1
+  def of(n), do: n * of(n - 1)
+end
+
+# Exercises:
+# implment and runa function sum(n that uses recursionto calculate the sum of integers
+# from 1 to n
+defmodule Sum do
+  def of(0), do: 0
+  def of(n), do: n + of(n - 1)
+end
+
+Sum.of(5)
+```
+
+## Guard Clauses
+
+```elixir
+# Pattern matching based on type of argument passed
+defmodule Guard do
+  def what_is(x) when is_number(x) do
+    IO.puts("#{x} is a number")
+  end
+
+  def what_is(x) when is_list(x) do
+    IO.puts("#{inspect(x)} is a list")
+  end
+
+  def what_is(x) when is_atom(x) do
+    IO.puts("#{x} is an atom")
+  end
+end
+
+Guard.what_is(99)
+Guard.what_is(:cat)
+Guard.what_is([1, 2, 3])
+```
+
+```elixir
+# factorial would originally loop forever if negative, therefore we should guard against that
+defmodule Factorial_V2 do
+  def of(0), do: 1
+
+  def of(n) when is_integer(n) and n > 0 do
+    n * of(n - 1)
+  end
+end
+
+Factorial_V2.of(4)
+```
+
+#### Available guards
+
+* Any Comparison: `==`, `!=`, `===`, `!==`, `>`, `<`, `<=`, `>=`
+* Boolean and negation: `or`, `and`, `not`, `!`
+  * `||` and `&&` are NOT allowed
+* Arithmetic operators: `+`, `-`, `*`, `/`
+* Join operators: `<>`, `++`
+* The `in` operator
+* Type check functions
+  * `is_atom`, `is_function`, `is_port`, `is_binary`
+  * `is_integer`, `is_record`, `is_bitstring`
+  * `is_list`, `is_reference`, `is_boolean`
+  * `is_map`, `is_tuple`
+* Other functions
+  * `abs`, `elem`, `node`, `self`, `bit_size`
+  * ...
+
+## Default Parameters
+
+```elixir
+# default syntax is '\\'
+defmodule Example do
+  def func(p1, p2 \\ 2, p3 \\ 3, p4) do
+    IO.inspect([p1, p2, p3, p4])
+  end
+end
+
+Example.func(10, 20)
+Example.func(10, 20, 30)
+Example.func(10, 20, 30, 40)
+```
+
+```elixir
+# These definitions are automatically set, so if you try to
+# create a similar signature, you'll get an error like the following
+
+# defmodule Example_2 do
+#   def func(p1, p2 \\ 2, p3 \\ 3, p4) do
+#     IO.inspect([p1, p2, p3, p4])
+#   end
+
+#   def func(p1, p2) do
+#     IO.inspect([p1, p2])
+#   end
+# end
+```
+
+```elixir
+# Another error arises when parameters are close to interacting
+defmodule DefaultParams do
+  def func(p1, p2 \\ 123), do: IO.inspect([p1, p2])
+  def func(p1, 99), do: IO.puts("you said 99")
+end
+```
+
+```elixir
+# Solve the above with a function head
+defmodule DefaultParams_2 do
+  def func(p1, p2 \\ 123)
+
+  def func(p1, p2) when is_list(p1) do
+    "you said #{p2} with a list"
+  end
+
+  def func(p1, p2) do
+    "You passed in #{p1} and #{p2}"
+  end
+end
+
+IO.puts(DefaultParams_2.func(99, "cat"))
+IO.puts(DefaultParams_2.func(99))
+IO.puts(DefaultParams_2.func([123]))
+IO.puts(DefaultParams_2.func([123], "dog"))
+```
+
+```elixir
+# Exercise
+# Implement a guessing game, passing in a range and actual value
+# The program should then make guesses, halving the range each time to find the values
+
+defmodule GuessingGame do
+  def half(a, b), do: div(a + b, 2)
+
+  def do_guess(guess, actual, _min.._max) when guess == actual do
+    IO.puts("Found at #{guess}")
+  end
+
+  def do_guess(guess, actual, min..__max) when guess > actual do
+    IO.puts("Searching at #{guess}")
+    start(actual, min..guess)
+  end
+
+  def do_guess(guess, actual, __min..max) when guess < actual do
+    IO.puts("Searching at #{guess}")
+    start(actual, guess..max)
+  end
+
+  def start(actual, min..max) when actual >= min and actual <= max and is_integer(actual) do
+    do_guess(half(min, max), actual, min..max)
+  end
+end
+
+GuessingGame.start(523, 1..1000)
+```
+
+## The Pipe Operator: |>
+
+```elixir
+# |> takes the result of the first operation and sends it to the next
+1..10
+|> Enum.map(&(&1 * &1))
+|> Enum.filter(&(&1 < 40))
+|> IO.inspect()
+
+# Fp-ts pipe function, same concept. Deserves its own section.
+```
+
+## Modules
+
+```elixir
+# Accessing properties in modules
+defmodule Outer do
+  defmodule Inner do
+    def inner_func, do: IO.puts("inner function")
+  end
+
+  def outer_func do
+    Inner.inner_func()
+    IO.puts("and then outer")
+  end
+
+  def call_outer_func, do: outer_func()
+end
+
+Outer.call_outer_func()
+Outer.Inner.inner_func()
+
+# Nested modules are just syntax the following is a similar "nested" module
+defmodule Outer.Inner_2 do
+  def a_new_nested_func, do: IO.puts("sort of nested")
+end
+
+Outer.Inner_2.a_new_nested_func()
+```
+
+#### Directives:
+
+* The `import` directive
+  * this runs first, and brings a modules functions and/or macros into the current scope
+    Importing allows the functions imported to be used without constantly declaring the function name
+  * via: `import Module [, only:|except]`
+  * example: `import List, only [flatten: 1, duplicate: 2]`
+* The `alias` directive
+  * `as:` notation
+  * `alias some.module.function as function`
+* The `require` directive
+  * require a module to use macros detailed later
+
+#### Attributes
+
+Metadata set in a module is called an `attribute` and must be set at the top level of a module
+
+```elixir
+defmodule Example_Attribute do
+  @some_attribute "a string in this case"
+
+  def get_attribute, do: @some_attribute
+end
+
+IO.puts(Example_Attribute.get_attribute())
+```
+
+```elixir
+# Erlang modules can be accessed in Elixir via lowercase atom format
+
+:io.format("The number is ~3.1f~n", [5.678])
+
+# When using Modules, check elixir first, than erlang
+```
+
+## Lists and Recursion
+
+```elixir
+# Head and tail
+list = [1, 2, 3]
+[head | tail] = list
+IO.inspect(head)
+IO.inspect(tail)
+
+# Elixir is unsure if character codes, or numbers
+IO.inspect([99, 97, 116])
+# If something isnt printable, elixir will revert to numbers
+IO.inspect([99, 97, 116, 0])
+
+defmodule MyList do
+  def len([]), do: 0
+  def len([_head | tail]), do: 1 + len(tail)
+
+  def square([]), do: []
+
+  def square([head | tail]) do
+    [head * head | square(tail)]
+  end
+
+  def add_1([]), do: []
+  def add_1([head | tail]), do: [head + 1 | add_1(tail)]
+
+  def map([], _func), do: []
+  def map([head | tail], func), do: [func.(head) | map(tail, func)]
+
+  def reduce([], acc, _fun), do: acc
+  def reduce([head | tail], acc, fun), do: reduce(tail, fun.(head, acc), fun)
+end
+
+IO.puts(MyList.len(list))
+IO.inspect(MyList.square(list))
+# Equivalent to: IO.inspect Enum.map(list, &(&1 * &1))
+IO.inspect(MyList.add_1(list))
+IO.inspect(MyList.map(list, &(&1 * &1)))
+IO.inspect(MyList.reduce(list, 1, &(&1 * &2)))
+```
+
+```elixir
+# Exercises
+# 1.) Write a mapsum function that takes a list and a function
+#     applying the function and summing the list
+# 2.) Write a function to return the max value in a list
+# 3.) Write a function that takes a string and adds 'n' characters to
+#     the string, wrapping if the letter goes past 'z'
+
+list = [1, 2, 3]
+
+defmodule ExerciseList do
+  def map([], _func), do: []
+  def map([head | tail], func), do: [func.(head) | map(tail, func)]
+
+  def sum([], acc), do: acc
+  def sum([head | tail], acc), do: sum(tail, acc + head)
+
+  def mapsum(list, func), do: map(list, func) |> sum(0)
+
+  def maxList(list), do: maxList(list, -1)
+  def maxList([], acc), do: acc
+
+  def maxList([head | tail], acc) when head > acc do
+    maxList(tail, head)
+  end
+
+  def maxList([head | tail], acc) when head <= acc do
+    maxList(tail, acc)
+  end
+
+  def caesar([], _n), do: []
+
+  def caesar([head | tail], n) when head + n < 122 do
+    [head + n | caesar(tail, n)]
+  end
+
+  def caesar([head | tail], n) when head + n >= 122 do
+    [head + n - 26 | caesar(tail, n)]
+  end
+end
+
+IO.inspect(ExerciseList.mapsum(list, &(&1 * &1)))
+IO.inspect(ExerciseList.maxList(list))
+IO.inspect(ExerciseList.caesar(~c"ryvkve", 13))
+```
+
+```elixir
+# Pipe works like a joining operator (hence head grabbing first value in match)
+IO.inspect([1, 2, 3 | [4, 5, 6]])
+
+defmodule Swapper do
+  def swap([]), do: []
+  def swap([a, b | tail]), do: [b, a | swap(tail)]
+  def swap([_]), do: raise("Must have even numbered list")
+end
+
+Swapper.swap([1, 2, 3, 4, 5, 6])
+```
+
+```elixir
+defmodule WeatherHistory do
+  def test_data do
+    [
+      [123, 26, 15, 0.125],
+      [124, 27, 15, 0.425],
+      [125, 28, 21, 0.085],
+      [126, 29, 19, 0.60],
+      [127, 30, 17, 0.095],
+      [128, 31, 15, 0.05],
+      [129, 28, 22, 0.10],
+      [130, 27, 28, 0.04]
+    ]
+  end
+
+  def for_location([], _target), do: []
+
+  def for_location([head = [_, target, _, _] | tail], target) do
+    [head | for_location(tail, target)]
+  end
+
+  def for_location([_ | tail], target), do: for_location(tail, target)
+end
+
+WeatherHistory.for_location(WeatherHistory.test_data(), 27)
+```
+
+```elixir
+# Exercise
+# Write a function span(from, to), that returns a list of number from up to to
+
+defmodule SpanModule do
+  def span(from, to) when from <= to, do: [from | span(from + 1, to)]
+  def span(from, to) when from > to, do: []
+end
+
+SpanModule.span(1, 10)
+```
+
+## List Module
+
+```elixir
+# ++ is the list concatenation method
+IO.inspect([1, 2, 3] ++ [4, 5, 6])
+
+# List Module Functions
+IO.inspect(List.flatten([1, 2, 3, [4, [[[5, [6]]]]]]))
+
+# Below was for practice but should look like
+# List.foldl([1,2,3], "", fn value, acc -> "#{value}{#{acc}}") end
+# Fold left, vs right (fold right starts at left most and traverses right)
+IO.inspect(List.foldl([1, 2, 3], "", &"#{&1}(#{&2})"))
+IO.inspect(List.foldr([1, 2, 3], "", &"#{&1}(#{&2})"))
+
+# Expensive operation use sparingly
+IO.inspect(List.replace_at([1, 2, 3], 2, "Something new"))
+
+# Matches on key-value
+list = [{:name, "Michael"}, {:likes, "Stuff"}, {:where, "Shelby Twn, MI"}]
+IO.inspect(List.keyfind(list, "Michael", 1))
+IO.inspect(List.keyfind(list, "BOB", 1, "No Bob here"))
+# Remove key+value
+IO.inspect(List.keydelete(list, "Stuff", 1))
+# Replace a key+value with another
+IO.inspect(List.keyreplace(list, :name, 0, {:first_name, "Michael"}))
+```
+
+## Maps, Lists, Sets, and Structures
+
+```elixir
+# Keyword lists, generally used as options/configurations
+defmodule Canvas do
+  @defaults [
+    fg: "black",
+    bg: "white",
+    font: "Merriweather"
+  ]
+  def draw_text(text, options \\ []) do
+    options = Keyword.merge(@defaults, options)
+    IO.puts("Drawing text #{inspect(text)}")
+    IO.puts("Foreground: #{options[:fg]}")
+    IO.puts("Background: #{Keyword.get(options, :bg)}")
+    IO.puts("Font: #{Keyword.get(options, :font)}")
+    IO.puts("Pattern: #{Keyword.get(options, :pattern, "solid")}")
+    IO.puts("Style: #{Keyword.get(options, :style)}")
+  end
+end
+
+Canvas.draw_text("This is a keyword list", fg: "red")
+```
+
+```elixir
+# Maps: The go to data structure for key/value pairs
+# Example map functions
+map = %{name: "Michael", likes: "stuff", where: "Shelby twn"}
+IO.inspect(Map.keys(map))
+IO.inspect(Map.values(map))
+IO.puts(map[:name])
+IO.puts(map.name)
+IO.inspect(Map.drop(map, [:where, :likes]))
+IO.inspect(Map.put(map, :also_likes, "Elixir"))
+IO.inspect(Map.has_key?(map, :invalid_key))
+IO.inspect({value, new_map} = Map.pop(map, :where))
+IO.puts(Map.equal?(%{name: "Michael", likes: "stuff", where: "Shelby twn"}, map))
+```
+
+```elixir
+person = %{name: "Michael", height: 5.7}
+# Is there an entry with a name key
+IO.inspect(%{name: a_name} = person)
+# Is there an entry with a name and height key
+IO.inspect(%{name: _, height: _} = person)
+# Is there an entry with a name key with value of "Michael"
+IO.inspect(%{name: "Michael"} = person)
+
+# %{name: _, weight: _} = person <- this doesnt match, as theres no weight property
+people = [
+  %{name: "Michael", height: 5.7},
+  %{name: "Matthew", height: 5.9},
+  %{name: "Danielle", height: 5.3},
+  %{name: "Stephanie", height: 5.3}
+]
+
+IO.inspect(
+  # Generator binds each map to person, then binds the height to denoted height
+  # property, the filter than selects only heights above a certain threshold
+  # the do returns each object that passes, constructing the 2 map list.
+  for person = %{height: height} <- people, height > 5.3, do: person
+)
+
+defmodule HotelRoom do
+  def book(%{name: name, height: height}) when height > 5.7 do
+    IO.puts("#{name} is tall")
+  end
+
+  def book(%{name: name, height: height}) when height < 5.4 do
+    IO.puts("#{name} is short")
+  end
+
+  def book(person), do: IO.puts("#{person.name} is normal")
+end
+
+people
+|> Enum.each(&HotelRoom.book/1)
+
+map = %{name: "Michael", likes: "stuff", where: "Shelby twn"}
+
+for key <- [:name, :likes] do
+  %{^key => value} = map
+  IO.inspect(value)
+end
+
+# Copy and modify with pipe, constructing a map and replacing key values
+# Does not add new keys to the map
+new_map = %{map | likes: "new likes"}
+```
+
+```elixir
+# Structures are modules that wrap maps for structure
+defmodule Subscriber, do: defstruct(name: "", paid: false, over_18: true)
+```
+
+```elixir
+s1 = %Subscriber{}
+s2 = %Subscriber{name: "Michael"}
+
+%Subscriber{name: a_name} = s2
+IO.puts(s2.name)
+IO.puts(a_name)
+%Subscriber{s2 | paid: true}
+```
+
+```elixir
+# Nested structures also supported
+defmodule Customer, do: defstruct(name: "", company: "")
+defmodule BugReport, do: defstruct(owner: %Customer{}, details: "", severty: 1)
+```
+
+```elixir
+sample_report = %BugReport{
+  owner: %Customer{
+    name: "Michael",
+    company: "Ryan Specialty"
+  },
+  details: "broken",
+  severty: 2
+}
+
+IO.inspect(sample_report)
+IO.inspect(put_in(sample_report.owner.company, "None, hes been deleted"))
+IO.inspect(update_in(sample_report.owner.name, &("Mr. " <> &1)))
+
+sample_report = %{
+  owner: %{
+    name: "Michael",
+    company: "Ryan Specialty"
+  },
+  details: "broken",
+  severty: 2
+}
+
+# The accessors can also be indexed with atoms in anonymous structures
+put_in(sample_report, [:owner, :company], "Some new Company")
+```
+
+```elixir
+#  Set notation
+set1 = 1..5 |> Enum.into(MapSet.new())
+set2 = 3..8 |> Enum.into(MapSet.new())
+IO.inspect(MapSet.member?(set1, 3))
+IO.inspect(MapSet.union(set1, set2))
+# Difference takes the remainder from first set, as seen below
+IO.inspect(MapSet.difference(set1, set2))
+IO.inspect(MapSet.difference(set2, set1))
+IO.inspect(MapSet.intersection(set1, set2))
+```
+
+## Enumerations
+
+```elixir
+# Enumeration functions.The Enum module is the most common for collections
+
+list = Enum.to_list(1..5)
+# alternatively, if constructing from multiple existent lists
+Enum.concat([1, 2, 3], [4, 5, 6])
+# The map has already been discussed, but its by in large the most used from the
+# enumeration module
+IO.inspect(Enum.map(list, &(&1 * 10)))
+IO.inspect(Enum.map(list, &String.duplicate("*", &1)))
+
+# Search functions are also available
+IO.inspect(Enum.at(10..20, 3))
+IO.inspect(Enum.at(10..20, 20))
+# If it would return nil, you can provide a default
+IO.inspect(Enum.at(10..20, 20, :no_one_here))
+IO.inspect(Enum.filter(list, &(&1 > 2)))
+IO.inspect(Enum.filter(list, &Integer.is_even/1))
+IO.inspect(Enum.reject(list, &Integer.is_even/1))
+
+string_list = ["there", "was", "a", "crooked", "man"]
+
+IO.inspect(Enum.sort(string_list))
+# Sorting can also be given a custom function
+# NOTE ON SORTING. never use just `<` always have `=` as well for stable sorting
+IO.inspect(Enum.sort(string_list, &(String.length(&1) <= String.length(&2))))
+
+IO.inspect(Enum.max(string_list))
+# The max function must be changed to max_by
+IO.inspect(Enum.max_by(string_list, &String.length/1))
+
+# Collections can be split
+IO.inspect(Enum.take(list, 3))
+# or get every _ elements
+IO.inspect(Enum.take_every(list, 2))
+# Or while
+IO.inspect(Enum.take_while(list, &(&1 < 3)))
+# If both lists are required
+IO.inspect(Enum.split(list, 3))
+# and while
+IO.inspect(Enum.split_while(list, &(&1 < 3)))
+
+# Joins (reductions)
+IO.inspect(Enum.join(list))
+# can add delimiters
+IO.inspect(Enum.join(list, ", "))
+
+# Predicates: all, any, member, and empty
+# Merges
+IO.inspect(Enum.zip(list, [:a, :b, :c]))
+IO.inspect(Enum.with_index(["once", "upon", "a", "time"]))
+
+# Folds
+Enum.reduce(1..100, &(&1 + &2))
+```
+
+```elixir
+# Example dealing deck of cards
+deck = for rank <- ~c"23456789TJQKA", suit <- ~c"CDHS", do: [suit, rank]
+deck |> Enum.shuffle() |> Enum.take(13)
+
+# Exercise
+# Implement the following without library functions
+# all? each filter split and take
+defmodule MyEnum do
+  def all?([], _predicate), do: true
+
+  def all?([head | tail], predicate) do
+    predicate.(head) && all?(tail, predicate)
+  end
+
+  def each([], _func), do: :ok
+
+  def each([head | tail], func) do
+    func.(head)
+    each(tail, func)
+  end
+
+  def filter([], _func), do: []
+
+  def filter([head | tail], func) do
+    if func.(head) == true do
+      [head | filter(tail, func)]
+    else
+      filter(tail, func)
+    end
+  end
+end
+
+list = Enum.to_list(1..5)
+IO.inspect(MyEnum.all?(list, &(&1 < 6)))
+IO.inspect(Enum.all?(list, &(&1 < 6)))
+
+# IO.inspect MyEnum.each list, &(IO.puts &1)
+# IO.inspect Enum.each list, &(IO.puts &1)
+
+IO.inspect(MyEnum.filter(list, &(rem(&1, 2) == 0)))
+IO.inspect(Enum.filter(list, &(rem(&1, 2) == 0)))
+```
+
+## Streams
+
+```elixir
+# Streams, Composable Enumerators
+s = Stream.map([1, 3, 5, 7], &(&1 + 1))
+# To convert to the list
+Enum.to_list(s)
+
+# They're also composable
+# square = Stream.map [1,2,3,4], &(&1 * &1)
+# plus_one = Stream.map square, &(&1 + 1)
+# odds = Stream.filter plus_one, &(rem(&1,2) == 1)
+# Enum.to_list odds
+
+# Proper way
+[1, 2, 3, 4]
+|> Stream.map(&(&1 * &1))
+|> Stream.map(&(&1 + 1))
+|> Stream.filter(&(rem(&1, 2) == 1))
+|> Enum.to_list()
+|> IO.inspect()
+
+# Stream Functions
+
+# Cycle: 
+# Creates an infinite stream with alternating elements (in this case, 'green', 'white')
+# If it reaches end of list given, it cycles
+Stream.cycle(~w{green white})
+|> Stream.zip(1..5)
+|> Enum.map(fn {class, value} -> "<tr class='#{class}'><td>#{value}</td></tr>\n" end)
+|> IO.puts()
+
+# Repeatedly
+# Takes a function and invokes it each time a new value is supplied to stream
+Stream.repeatedly(&:random.uniform/0)
+|> Enum.take(3)
+|> IO.inspect()
+
+# Iterate
+# The first value is the starting value, the next value is generated by applying
+# the function supplied, this continues for as long as numbers are ingested in the stream
+Stream.iterate(0, &(&1 + 1))
+|> Enum.take(5)
+|> IO.inspect()
+
+Stream.iterate(2, &(&1 * &1))
+|> Enum.take(5)
+|> IO.inspect()
+
+# Unfold
+# Similar to iterate, but the function takes two arguments, and uses results
+# from the first to create the next value. Must be instantiated with 2 elements
+
+# Example of fibonacci sequence where 
+# a = value from stream
+# b = new state
+Stream.unfold({0, 1}, fn {a, b} -> {a, {b, a + b}} end)
+|> Enum.take(15)
+|> IO.inspect()
+
+# Resource
+# Builds upon unfold, instead of taking initial values
+# instead take a function that returns the value, and when completed
+# stream needs to be closed. whereas all other streams close automatically
+# A third argument is given to close the stream
+
+# Arguments: Open file, read file, close file.
+# Stream.resource(
+#   fn -> File.open!() end, #open file function
+#   fn file ->
+#     case IO.read(file, :line) do
+#       data when is_binary data -> {[data], file} 
+#       _ -> {:halt, file} 
+#     end
+#   end, #read file function
+#   fn file -> File.close(file) end #close file function
+# )
+```
+
+```elixir
+# Timer example for Stream.resource
+defmodule Countdown do
+  def sleep(seconds) do
+    receive do
+    after
+      seconds * 1000 -> nil
+    end
+  end
+
+  def say(text) do
+    spawn(fn -> :os.cmd(~c"say #{text}") end)
+  end
+
+  def timer do
+    Stream.resource(
+      fn ->
+        {_h, _m, s} = :erlang.time()
+        60 - s - 1
+      end,
+
+      # start, seconds to next minute
+      fn
+        0 ->
+          {:halt, 0}
+
+        count ->
+          sleep(1)
+          {[inspect(count)], count - 1}
+      end,
+
+      # ingest number sleep and inspect
+      # nothing to close.
+      fn _ -> nil end
+    )
+  end
+end
+
+# Example of ingesting data as it streams in
+# counter = Countdown.timer
+# printer = counter
+# |> Stream.each(&IO.puts/1)
+# printer 
+# |> Enum.take(5)
+```
+
+## The Collectable Protocol
+
+Enumerables let you iterate over the elements in a type
+
+Collectables however, allow you to build a "collection" of elements by inserting into it
+Note: Not all colletions are collectable, ranges cannot have entries added into them.
+
+Generally, we access collectables via `Enum.into`
+
+```elixir
+IO.inspect(Enum.into(1..5, []))
+```
+
+Note: Collectables are deprecated for non empty lists.
+
+### Comprehensions:
+
+> a shortcut for mapping and filtering collectables
+
+Given one or more collections extract all combinations of values from each. optionally filtering, and generate a new collection from values that remain.
+
+```elixir
+list = [1, 2, 3, 4, 5]
+IO.inspect(for x <- list, do: x * x)
+IO.inspect(for x <- list, x < 4, do: x * x)
+
+# You can use multiple arguments too
+# This will run for each combination in the generators
+# The following calls for 1,5 1,6 2,5 2,6
+IO.inspect(for x <- [1, 2], y <- [5, 6], do: {x, y})
+
+# Can use generators for other generators
+min_maxes = [{1, 4}, {2, 3}, {10, 15}]
+IO.inspect(for {min, max} <- min_maxes, n <- min..max, do: n)
+
+# Filter works by skipping function call/generation if a value fails a check
+first8 = 1..8 |> Enum.to_list()
+# Checks multiples of 10
+# This comprehension iterates 64 times (n^2), however
+# The first filter cuts the iteration when x < y, meaning the second
+# filter only runs 36 times
+IO.inspect(for x <- first8, y <- first8, x >= y, rem(x * y, 10) == 0, do: {x, y})
+
+# Comprehension works via pattern matching so it can deconstruct data
+test_list = [dallas: :hot, michigan: :cold, dc: :muggy, la: :smoggy]
+IO.inspect(for {city, weather} <- test_list, do: {weather, city})
+
+# Works on bits too
+# generator is enclosed in <<>>, indicating binary, and returns int values of each character
+IO.inspect(for <<ch <- "hello">>, do: <<ch>>)
+
+IO.inspect(
+  for <<(<<b1::size(2), b2::size(3), b3::size(3)>> <- "hello")>>,
+    do: "O#{b1}#{b2}#{b3}"
+)
+
+# We can return a value generated from a comprehension with into
+IO.inspect(for x <- ~w{cat dog}, into: Map.new(), do: {x, String.upcase(x)})
+for x <- ~w{cat dog}, into: %{"ant" => "ANT"}, do: {x, String.upcase(x)}
+```
+
+### Exercises:
+
+1. Using the custom span (see [List and Recursion](#lists-and-recursion)) use it and list comprehensions to return a list of the prime numbers from 2 to n
+2. Given a list of orders, write a function that takes both lists, and returns a copy of the orders, with an extra field, `total_amount` which is the sum of net and taxes, if shipment is not in the tax list, no tax is applied
+   > * tax_rates = [NC: 0.075, TX: 0.08]
+   > * orders = [
+   >     [id: 123, ship_to: :NC, net_amount: 100.00],
+   >     [id: 124, ship_to: :OK, net_amount: 35.50],
+   >     [id: 125, ship_to: :TX, net_amount: 24.00],
+   >     [id: 126, ship_to: :TX, net_amount: 44.80],
+   >     [id: 127, ship_to: :NC, net_amount: 25.00],
+   >     [id: 128, ship_to: :MA, net_amount: 10.00],
+   >     [id: 129, ship_to: :CA, net_amount: 102.00],
+   >     [id: 130, ship_to: :NC, net_amount: 50.00]
+   >   ]
+
+```elixir
+# 1
+defmodule Comprehensions do
+  def find_primes(n) do
+    non_primes =
+      for x <- SpanModule.span(2, n),
+          y <- SpanModule.span(2, x),
+          :math.sqrt(x) >= y,
+          rem(x, y) == 0,
+          do: x
+
+    for x <- SpanModule.span(2, n), Enum.all?(non_primes, &(&1 != x)), do: x
+  end
+
+  def order_summary(orders, taxes) do
+    for order <- orders, taxes[order[:ship_to]] > 0, do: 0
+  end
+end
+
+tax_rates = [NC: 0.075, TX: 0.08]
+
+orders = [
+  [id: 123, ship_to: :NC, net_amount: 100.00],
+  [id: 124, ship_to: :OK, net_amount: 35.50],
+  [id: 125, ship_to: :TX, net_amount: 24.00],
+  [id: 126, ship_to: :TX, net_amount: 44.80],
+  [id: 127, ship_to: :NC, net_amount: 25.00],
+  [id: 128, ship_to: :MA, net_amount: 10.00],
+  [id: 129, ship_to: :CA, net_amount: 102.00],
+  [id: 130, ship_to: :NC, net_amount: 50.00]
+]
+
+Comprehensions.find_primes(20)
+Comprehensions.order_summary(orders, tax_rates)
+```
