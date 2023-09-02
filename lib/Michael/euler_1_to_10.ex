@@ -291,3 +291,30 @@ defmodule Euler.PythagoreanTriplet do
     |> hd()
   end
 end
+
+defmodule Euler.SummationOfPrimes do
+    @doc """
+    Question 10
+
+    The sum of the primes below 10 is 2 + 5 + 7 = 17.
+
+    Find the sum of all the primes below two million
+
+    Result: this is extremely slow and should be fixed later
+    142913828922
+
+    ## Examples
+
+    iex> Euler.SummationOfPrimes.solve()
+    142913828922
+  """
+  def solve(num \\ 3, factors \\ [2])
+  def solve(num, factors) when num <= 2_000_000 do
+    if Enum.all?(factors, &(rem(num, &1) !== 0)) do
+      solve(num + 2, [num | factors])
+    else
+      solve(num + 2, factors)
+    end
+  end
+  def solve(_, factors), do: Enum.reduce(factors, fn x, acc -> x + acc end)
+end
