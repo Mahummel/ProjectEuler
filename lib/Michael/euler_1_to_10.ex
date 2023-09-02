@@ -107,7 +107,7 @@ defmodule Euler.Palindrone do
 
     ## Examples
 
-    iex> Euler_1_10.palidrome()
+    iex> Euler.Palindrone.solve()
     906609
   """
   def solve() do
@@ -127,5 +127,28 @@ defmodule Euler.Palindrone do
     for x <- 0..(length - 1) do
       String.at(string, x) === String.at(string, String.length(string) - (x + 1))
     end
+  end
+end
+
+defmodule Euler.SmallestMultiple do
+  @moduledoc false
+
+  @doc """
+    Question 5
+    2520 is the smallest number that can be divided by each of the numbers from
+    1 to 10 without any remainder.
+
+    What is the smallest positive number that is evenly divisible by all of the
+    numbers from 1 to 20?
+
+    ## Examples
+
+    iex> Euler.SmallestMultiple.solve()
+    232792560
+  """
+  def solve(num \\ 20) do
+    20..11
+    |> Enum.all?(&(rem(num, &1) === 0))
+    |> (&(if (&1) do num else solve(num + 20) end)).()
   end
 end

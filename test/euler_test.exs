@@ -18,4 +18,8 @@ defmodule EulerTest do
   test "Palindrone creation" do
     assert Euler.Palindrone.solve() === 906609
   end
+
+  test "Smallest Multiple" do
+    assert Euler.SmallestMultiple.solve() === 232792560
+  end
 end
