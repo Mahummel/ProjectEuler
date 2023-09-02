@@ -22,4 +22,8 @@ defmodule EulerTest do
   test "Smallest Multiple" do
     assert Euler.SmallestMultiple.solve() === 232792560
   end
+
+  test "Sum Square Difference" do
+    assert Euler.SumSquareDifference.solve() === 25164150
+  end
 end

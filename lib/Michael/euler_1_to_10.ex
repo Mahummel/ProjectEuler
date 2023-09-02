@@ -17,6 +17,7 @@ defmodule Euler.Multiples do
   @spec solve(non_neg_integer, non_neg_integer) :: non_neg_integer
   def solve(n \\ 999, sum \\ 0)
   def solve(0, sum), do: sum
+
   def solve(n, sum) do
     if n > 0 and (rem(n, 5) == 0 or rem(n, 3) == 0) do
       solve(n - 1, sum + n)
@@ -146,9 +147,41 @@ defmodule Euler.SmallestMultiple do
     iex> Euler.SmallestMultiple.solve()
     232792560
   """
+  @spec solve(non_neg_integer) :: non_neg_integer
   def solve(num \\ 20) do
     20..11
     |> Enum.all?(&(rem(num, &1) === 0))
-    |> (&(if (&1) do num else solve(num + 20) end)).()
+    |> (&(if &1 do
+            num
+          else
+            solve(num + 20)
+          end)).()
+  end
+end
+
+defmodule Euler.SumSquareDifference do
+  @moduledoc false
+
+  @doc """
+    Question 6
+    The sum of the squares of the first ten natural numbers is 385,
+    The square of the sum of the first ten natural numbers is 3025,
+    Hence the difference between the sum of the squares of the first
+    ten natural numbers and the square of the sum is 3025 - 385 = 2640.
+
+    Find the difference between the sum of the squares of the first one
+    hundred natural numbers and the square of the sum.
+
+    ## Examples
+
+    iex> Euler.SumSquareDifference.solve()
+    25164150
+  """
+  @spec solve(number, number, number) :: number
+  def solve(num \\ 1, sum \\ 0, square \\ 0)
+  def solve(101, sum, square), do: trunc(:math.pow(square, 2) - sum)
+
+  def solve(num, sum, square) do
+    solve(num + 1, sum + :math.pow(num, 2), square + num)
   end
 end
