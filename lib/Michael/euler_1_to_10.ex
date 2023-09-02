@@ -245,9 +245,10 @@ defmodule Euler.LargestProductInSeries do
     |> maxProduct()
   end
 
-  def maxProduct(list, max \\ 0)
-  def maxProduct([_ | []], max), do: max
-  def maxProduct([_ | tail], max) do
+  defp maxProduct(list, max \\ 0)
+  defp maxProduct([_ | []], max), do: max
+
+  defp maxProduct([_ | tail], max) do
     product =
       tail
       |> Enum.take(13)
@@ -259,5 +260,34 @@ defmodule Euler.LargestProductInSeries do
             end)).()
 
     maxProduct(tail, product)
+  end
+end
+
+defmodule Euler.PythagoreanTriplet do
+  @doc """
+    Question 9
+    A Pythagorean triplet is a set of natural numbers: a < b < c, such that
+
+    a^2 + b^2 = c^2,
+
+    for example, 3^2 + 4^2 = 9 + 16 = 25 = 5^2
+
+    There exists exactly one Pythagorean triplet for which a + b + c = 1000
+    find the product abc
+
+    ## Examples
+
+    iex> Euler.PythagoreanTriplet.solve()
+    31875000
+  """
+  def solve() do
+    for c <- 1..1000,
+        b <- 1..(c - 1),
+        a <- 1..(b - 1),
+        a + b + c === 1000,
+        :math.pow(c, 2) == :math.pow(b, 2) + :math.pow(a, 2) do
+      a * b * c
+    end
+    |> hd()
   end
 end

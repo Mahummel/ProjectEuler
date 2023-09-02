@@ -34,4 +34,8 @@ defmodule EulerTest do
   test "Largest Product in Series" do
     assert Euler.LargestProductInSeries.solve() === 23514624000
   end
+
+  test "Pythagorean Triplets" do
+    assert Euler.PythagoreanTriplet.solve() === 31875000
+  end
 end
