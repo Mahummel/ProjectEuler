@@ -26,4 +26,9 @@ defmodule EulerTest do
   test "Sum Square Difference" do
     assert Euler.SumSquareDifference.solve() === 25164150
   end
+
+  test "Get Numbered Prime" do
+    assert Euler.GetNumberedPrime.solve() === 104743
+  end
+
 end

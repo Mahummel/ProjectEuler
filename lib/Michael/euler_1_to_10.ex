@@ -185,3 +185,31 @@ defmodule Euler.SumSquareDifference do
     solve(num + 1, sum + :math.pow(num, 2), square + num)
   end
 end
+
+defmodule Euler.GetNumberedPrime do
+  @moduledoc false
+
+  @doc """
+    Question 7
+    By listing the first six prime numbers:
+    2, 3, 5, 7, 11, and 13,
+    we can see that the 6th prime is 13.
+
+    What is the 1001st prime number?
+
+    ## Examples
+
+    iex> Euler.GetNumberedPrime.solve()
+    25164150
+  """
+  @spec solve(non_neg_integer, list(non_neg_integer), non_neg_integer) :: non_neg_integer
+  def solve(num \\ 3, factors \\ [2], count \\ 1)
+  def solve(_, factors, 10001), do: hd(factors)
+  def solve(num, factors, count) do
+    if Enum.all?(factors, &(rem(num, &1) !== 0)) do
+      solve(num + 2, [num | factors], count + 1)
+    else
+      solve(num + 2, factors, count)
+    end
+  end
+end
