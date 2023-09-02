@@ -205,11 +205,59 @@ defmodule Euler.GetNumberedPrime do
   @spec solve(non_neg_integer, list(non_neg_integer), non_neg_integer) :: non_neg_integer
   def solve(num \\ 3, factors \\ [2], count \\ 1)
   def solve(_, factors, 10001), do: hd(factors)
+
   def solve(num, factors, count) do
     if Enum.all?(factors, &(rem(num, &1) !== 0)) do
       solve(num + 2, [num | factors], count + 1)
     else
       solve(num + 2, factors, count)
     end
+  end
+end
+
+defmodule Euler.LargestProductInSeries do
+  @moduledoc false
+
+  @series File.read("./lib/Michael/series.txt")
+          |> (fn {:ok, data} -> String.graphemes(data) end).()
+
+  @doc """
+    Question 8
+    The four adjacent digits in the following 1000-digit number that have the
+    greatest product are 9 x 9 x 8 x 9 = 5832
+
+    Series: <See series.txt>
+
+    Find the thirteen adjacent digits in the 1000 digit number that have
+    the greatest produc. What is the value of this product
+
+    ## Examples
+
+    iex> Euler.LargestProductInSeries.solve()
+    25164150
+  """
+
+  def solve() do
+    @series
+    |> Enum.map(&Integer.parse(&1))
+    |> Enum.map(fn {num, ""} -> num end)
+    |> (&[0 | &1]).()
+    |> maxProduct()
+  end
+
+  def maxProduct(list, max \\ 0)
+  def maxProduct([_ | []], max), do: max
+  def maxProduct([_ | tail], max) do
+    product =
+      tail
+      |> Enum.take(13)
+      |> Enum.reduce(fn x, acc -> x * acc end)
+      |> (&(if max > &1 do
+              max
+            else
+              &1
+            end)).()
+
+    maxProduct(tail, product)
   end
 end

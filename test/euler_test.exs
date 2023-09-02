@@ -31,4 +31,7 @@ defmodule EulerTest do
     assert Euler.GetNumberedPrime.solve() === 104743
   end
 
+  test "Largest Product in Series" do
+    assert Euler.LargestProductInSeries.solve() === 23514624000
+  end
 end
